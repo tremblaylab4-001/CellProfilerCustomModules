@@ -108,7 +108,7 @@ Select *{YES}* to open the produced spreadsheet using your system's default spre
         hierarchical_labels = fcluster(linked, t=distance_threshold, criterion='distance')
         n_clusters = len(np.unique(hierarchical_labels))
 
-        kmeans = KMeans(n_clusters = n_clusters) # Ward distance specified by user at end of module 2
+        kmeans = KMeans(n_clusters = n_clusters, init="k-means++", random_state=24) # Ward distance specified by user at end of module 2
         # X_scaled = scaler.fit_transform(X_pd)
         # ^ Not Needed?
         X_pd["Cluster"] = kmeans.fit_predict(X_pd)

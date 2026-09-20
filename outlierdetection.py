@@ -282,11 +282,7 @@ Select the folder containing the CSV file to be loaded. {IO_FOLDER_CHOICE_HELP_T
                         "AreaShape_SpatialMoment_2_0",
                         "AreaShape_SpatialMoment_2_1",
                         "AreaShape_SpatialMoment_2_2",
-                        "AreaShape_SpatialMoment_2_3",
-                        "ObjectSkeleton_NumberBranchEnds_MorphBlue",
-                        "ObjectSkeleton_NumberNonTrunkBranches_MorphBlue",
-                        "ObjectSkeleton_NumberTrunks_MorphBlue",
-                        "ObjectSkeleton_TotalObjectSkeletonLength_MorphBlue"]]
+                        "AreaShape_SpatialMoment_2_3"]]
 
         # excluding infinite and na values
         df_2_clean = df_2.loc[:, ~(np.isinf(df_2) | df_2.isna()).any()]

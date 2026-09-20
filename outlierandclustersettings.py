@@ -33,6 +33,7 @@ import plotly.graph_objects as go
 import plotly.figure_factory as ff
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -269,19 +270,21 @@ Select the folder containing the CSV file to be loaded. {IO_FOLDER_CHOICE_HELP_T
 
         outliers_int_array = []
 
-        for outlier in final_string.split(','):
-            outliers_int_array.append(int(outlier))
+        if final_string != '':    
+            for outlier in final_string.split(','):
+                outliers_int_array.append(int(outlier))
+            print(X_pca_df.iloc[outliers_int_array]) 
 
         # removing rows corresponding to outliers from data frame
         # user inputting row numbers corresponding to outliers to remove from data frame
-        print(X_pca_df.iloc[outliers_int_array]) # values input by user
+        # values input by user
 
         # turning both labels and df into numpy arrays
         df_2_clean_np = df_2_clean.to_numpy()
         labels_3 = labels_2.to_numpy(dtype = str)
 
-        df_2_clean_cleaned = np.delete(df_2_clean_np,[], axis=0)
-        labels_cleaned = np.delete(labels_3,[], axis=0)
+        df_2_clean_cleaned = np.delete(df_2_clean_np,outliers_int_array, axis=0)
+        labels_cleaned = np.delete(labels_3,outliers_int_array, axis=0)
 
         # redo standardization
         scaler = StandardScaler()
@@ -309,8 +312,16 @@ Select the folder containing the CSV file to be loaded. {IO_FOLDER_CHOICE_HELP_T
         # hierarchical clustering
         linked = linkage(X_pd, method = "ward", metric = "euclidean")
 
+        max_ward_distance = 0
+        for i in linked:
+            if i[2] > max_ward_distance:
+                max_ward_distance = i[2]
+                #print('new highest')
+                #print(str(max_ward_distance))
+
         # create a dendrogram to visualize figures
-        den_figure = plt.figure(figsize = (10,5))
+        #den_figure = plt.figure(figsize = (10,5))
+        den_figure, ax = plt.subplots(figsize=(10, 5))
 
         dn1 = dendrogram(linked,
                 orientation = "top",
@@ -318,12 +329,16 @@ Select the folder containing the CSV file to be loaded. {IO_FOLDER_CHOICE_HELP_T
                 distance_sort = "descending",
                 show_leaf_counts = True,
                 color_threshold=0,
-                above_threshold_color='black')
-        
+                above_threshold_color='black', ax=ax)
+        ax.yaxis.set_major_formatter(
+            mtick.PercentFormatter(xmax=max_ward_distance, decimals=0)
+        )
+        ax.set_ylabel("Ward Distance in Percent (%)")
+        ax.yaxis.set_major_locator(mtick.MultipleLocator(max_ward_distance * 0.10))
+
         print()
         # plt title
         plt.xlabel("instances")
-        plt.ylabel("Ward distance")
         plt.show()
         # dendrogram displaying data structure generated as output of module 2
         # user decides based on figure how many clusters to choose as input for module 3
@@ -339,10 +354,33 @@ Select the folder containing the CSV file to be loaded. {IO_FOLDER_CHOICE_HELP_T
 
         if den_num_clusters_dlg.ShowModal() == wx.ID_OK:
             num_clusters = den_num_clusters_dlg.GetValue()
-            workspace.measurements.add_image_measurement("OutlierAndClusterSettings" + "_num_clusters", num_clusters)
+            num_clusters = (float(max_ward_distance) / 100) * float(num_clusters)
 
+            workspace.measurements.add_image_measurement("OutlierAndClusterSettings" + "_num_clusters", num_clusters)
         den_num_clusters_dlg.Close()
         plt.close()
+
+        # create a dendrogram to visualize figures
+        den_figure2, ax = plt.subplots(figsize=(10, 5))
+
+        den_figure2= dendrogram(linked,
+                orientation = "top",
+                labels = X_pd.index,
+                distance_sort = "descending",
+                show_leaf_counts = True,
+                color_threshold=float(num_clusters),
+                above_threshold_color='black', ax=ax)
+        
+        plt.axhline(num_clusters)
+        ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=max_ward_distance, decimals=0))
+        ax.set_ylabel("Ward Distance in Percent (%)")
+        ax.yaxis.set_major_locator(mtick.MultipleLocator(max_ward_distance * 0.10))
+        
+        print()
+        # plt title
+        plt.xlabel("instances")
+        plt.show()
+
         
         def output_df_to_csv(modulename,df,name):
             path = get_default_output_directory() + '/' + modulename + '_' + name + '.csv'
